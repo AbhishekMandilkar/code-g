@@ -18,8 +18,23 @@ model CodeReviewRules {
   id String @id @default(uuid())
   rule String
   repoId String
+  isDeleted Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
   // add index to repoId
   @@index([repoId])
 }
 
-
+// table for code review comments with prId & comment 
+model CodeReviewComments {
+  id String @id @default(uuid())
+  pullRequestId String
+  comment String
+  ruleId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  isDeleted Boolean @default(false)
+  
+  // add index to pullRequestId
+  @@index([pullRequestId])
+}

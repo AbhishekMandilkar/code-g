@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { rule, repoId } = body;
+    const { rule, repoId, id } = body;
 
     if (!rule || !repoId) {
       return NextResponse.json(
@@ -44,18 +44,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const newRule = await prisma.codeReviewRules.create({
-      data: {
+    const upsertedRule = await prisma.codeReviewRules.upsert({
+      where: {
+        id: id,
+      },
+      update: {
+        rule: rule,
+        updatedAt: new Date(),
+      },
+      create: {
         rule,
         repoId,
       },
     });
 
-    return NextResponse.json(newRule, { status: 201 });
+    return NextResponse.json(upsertedRule, { status: 200 });
   } catch (error) {
-    console.error('Error creating rule:', error);
+    console.error('Error upserting rule:', error);
     return NextResponse.json(
-      { error: 'Failed to create rule' },
+      { error: 'Failed to upsert rule' },
       { status: 500 }
     );
   }

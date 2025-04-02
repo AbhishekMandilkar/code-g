@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import {Octokit} from '@octokit/rest';
+import {prisma} from '@/lib/prisma';
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
@@ -19,20 +20,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Event ignored' }, { status: 200 });
     }
 
-    const { pull_request } = payload;
+    const { pull_request, repository } = payload;
 
     const prNumber = pull_request.number;
     const repoOwner = pull_request.base.repo.owner.login;
     const repoName = pull_request.base.repo.name;
     const commitSha = pull_request.head.sha;
 
-
+    const repoId = repository.id;
     // Step 2: Fetch diff
     const diffResponse = await axios.get(pull_request.diff_url, {
       headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` },
     });
 
     const diffContent = diffResponse.data;
+
+    const rules = await prisma.codeReviewRules.findMany({
+      where: {
+        repoId: `${repoId}`,
+      },
+    });
+
+    const rulesString = rules.map((rule) => `Id: ${rule.id} Rule: ${rule.rule}`).join('\n');
 
     // Step 3: Get AI-generated inline comments
     const aiResponse = await axios.post(
@@ -43,7 +52,16 @@ export async function POST(req: Request) {
           {
             role: 'system',
             content:
-              'Provide concise inline code review comments in JSON format: [{"file": "path/to/file","line": lineNumber,"comment": "Your comment"}] PLS DONOT RETURN ANYTHING ELSE AND DONOT FORMAT IN MARKDOWN OR ANY OTHER FORMAT JUST PLAIN JSON STRING ',
+              `Provide concise inline code review comments using following rules:
+              ${rulesString}
+              in JSON format: [{"file": "path/to/file","line": lineNumber,"comment": "Your comment", "ruleId": "ruleId which was used to generate the comment"}] 
+              Notes -
+              1. PLS DONOT RETURN ANYTHING ELSE AND DONOT FORMAT IN MARKDOWN OR ANY OTHER FORMAT JUST PLAIN JSON STRING 
+              2. ALWAYS FOLLOW THE RULES STRICTLY
+              3. Use only double quotes for strings in JSON
+              4. Pls add the comment on the next line of the line number you find the issue
+              5. IMPORTANT: All property names in JSON must be in double quotes
+              `,
           },
           { role: 'user', content: `Review diff:\n\n${diffContent}` },
         ],
@@ -65,9 +83,32 @@ export async function POST(req: Request) {
         line: comment.line,
       });
     }
+    addCommentToDB(String(prNumber), reviewComments);
     return NextResponse.json({ message: 'Review completed successfully' }, { status: 200 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+
+const addCommentToDB = async (prId: string, comments: {
+  comment: string;
+  ruleId: string;
+  file: string;
+  line: number;
+}[]) => {
+
+  try {
+    await prisma.codeReviewComments.createMany({
+      data: comments.map((comment) => ({
+        pullRequestId: prId,
+        comment: comment.comment,
+        ruleId: comment.ruleId,
+      })),
+    });
+  } catch (error) {
+    console.error('Database error:', error);
+    throw error;
   }
 }
