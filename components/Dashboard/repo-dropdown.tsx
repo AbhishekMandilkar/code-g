@@ -1,68 +1,50 @@
 "use client";
 
-import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
-import Link from "next/link";
+import {Check, ChevronsUpDown} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { Repo } from "@/app/dashboard/layout";
+import {useRepo} from "@/components/Provider/RepoProvider";
+import {Button} from "../ui/button";
+export function RepoDropdown() {
+  const { repoList, selectedRepo, setSelectedRepo } = useRepo();
 
-export function RepoDropdown({
-  repos,
-  defaultRepo,
-  onChange,
-}: {
-  repos: Repo[];
-  defaultRepo: string;
-  onChange: (repo: Repo) => void;
-}) {
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer"
+        >
+          <div className="flex flex-col items-start gap-0.5 leading-none">
+            <span className="text-xs text-muted-foreground">
+              {selectedRepo?.name ? "Repository" : "Select Repository"}
+            </span>
+            <span className="">{selectedRepo?.name}</span>
+          </div>
+          <ChevronsUpDown className="ml-auto" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="w-[--radix-dropdown-menu-trigger-width] max-h-[400px]"
+        align="start"
+      >
+        {repoList?.map((repo) => (
+            <DropdownMenuItem
+              key={repo.name}
+              onSelect={() => setSelectedRepo(repo)}
+              className="cursor-pointer"
             >
-              <div className="flex flex-col gap-0.5 leading-none">
-                <span className="text-xs text-muted-foreground">Select Repository</span>
-                <span className="">{defaultRepo}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] max-h-[400px]"
-            align="start"
-          >
-            {repos.map((repo) => (
-              <Link
-                className="w-full"
-                href={`?repoId=${repo.id}`}
-                key={repo.name}
-              >
-                <DropdownMenuItem
-                  key={repo.name}
-                  onSelect={() => onChange(repo)}
-                >
-                  {repo.name}
-                  {repo.name === defaultRepo && <Check className="ml-auto" />}
-                </DropdownMenuItem>
-              </Link>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+              {repo.name}
+              {repo.name === selectedRepo?.name && (
+                <Check className="ml-auto" />
+              )}
+            </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
