@@ -1,6 +1,7 @@
 "use client";
 import useSWR from "swr";
 import { RepoDropdown } from "@/components/Dashboard/repo-dropdown";
+import RulesList from "@/components/Dashboard/rules-table";
 import { SiteHeader } from "@/components/Dashboard/site-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Repo } from "./layout";
@@ -46,7 +47,9 @@ export default function Page() {
           )
         }
       />
-      <div className="@container/main flex flex-1 flex-col gap-2">dss</div>
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <RulesList />
+      </div>
     </div>
   );
 }
