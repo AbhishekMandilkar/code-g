@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { rule, repoId, id } = body;
+    const { rule, repoId, id, isDeleted } = body;
 
     if (!rule || !repoId) {
       return NextResponse.json(
@@ -51,10 +51,12 @@ export async function POST(request: Request) {
       update: {
         rule: rule,
         updatedAt: new Date(),
+        isDeleted: isDeleted,
       },
       create: {
         rule,
         repoId,
+        isDeleted: false,
       },
     });
 
