@@ -1,7 +1,7 @@
 "use client";
 import useSWR from "swr";
 import { RepoDropdown } from "@/components/Dashboard/repo-dropdown";
-import RulesList from "@/components/Dashboard/rules-table";
+import RulesList from "@/components/RuleTable/rules-table";
 import { SiteHeader } from "@/components/Dashboard/site-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Repo } from "./layout";
