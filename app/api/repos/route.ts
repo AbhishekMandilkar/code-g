@@ -19,6 +19,7 @@ export async function GET(request: Request) {
 
   const repos = await octokit.request("GET /users/{username}/repos", {
     username,
+    per_page: 100,
   });
 
   return NextResponse.json(

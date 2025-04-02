@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
-
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,17 +14,17 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Repo } from "@/app/dashboard/layout";
 
 export function RepoDropdown({
   repos,
   defaultRepo,
   onChange,
 }: {
-  repos: string[];
+  repos: Repo[];
   defaultRepo: string;
-  onChange: (repo: string) => void;
+  onChange: (repo: Repo) => void;
 }) {
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -42,17 +42,23 @@ export function RepoDropdown({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width]"
+            className="w-[--radix-dropdown-menu-trigger-width] max-h-[400px]"
             align="start"
           >
             {repos.map((repo) => (
-              <DropdownMenuItem
-                key={repo}
-                onSelect={() => onChange(repo)}
+              <Link
+                className="w-full"
+                href={`?repoId=${repo.id}`}
+                key={repo.name}
               >
-                {repo}
-                {repo === defaultRepo && <Check className="ml-auto" />}
-              </DropdownMenuItem>
+                <DropdownMenuItem
+                  key={repo.name}
+                  onSelect={() => onChange(repo)}
+                >
+                  {repo.name}
+                  {repo.name === defaultRepo && <Check className="ml-auto" />}
+                </DropdownMenuItem>
+              </Link>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>

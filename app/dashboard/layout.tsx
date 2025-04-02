@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 
-type Repo = {
+export type Repo = {
   name: string;
   url: string;
   id: string;
