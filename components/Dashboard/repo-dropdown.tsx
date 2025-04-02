@@ -35,7 +35,7 @@ export function RepoDropdown({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold text-xs">Select Repository</span>
+                <span className="text-xs text-muted-foreground">Select Repository</span>
                 <span className="">{defaultRepo}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
