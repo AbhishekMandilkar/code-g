@@ -18,5 +18,8 @@ model CodeReviewRules {
   id String @id @default(uuid())
   rule String
   repoId String
+  // add index to repoId
+  @@index([repoId])
 }
+
 
