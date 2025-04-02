@@ -1,24 +1,22 @@
-import { AppSidebar } from "@/components/Dashboard/app-sidebar";
+"use client";
+import { RepoDropdown } from "@/components/Dashboard/repo-dropdown";
 import { SiteHeader } from "@/components/Dashboard/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Page() {
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2"></div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="flex flex-1 flex-col">
+      <SiteHeader
+        leftView={
+          <h1 className="text-base font-medium">
+            <RepoDropdown
+              repos={[]}
+              defaultRepo={"ReactNotes"}
+              onChange={() => {}}
+            />
+          </h1>
+        }
+      />
+      <div className="@container/main flex flex-1 flex-col gap-2">dss</div>
+    </div>
   );
 }

@@ -16,13 +16,14 @@ import {
 } from "@/components/ui/sidebar";
 
 export function RepoDropdown({
-  versions,
-  defaultVersion,
+  repos,
+  defaultRepo,
+  onChange,
 }: {
-  versions: string[];
-  defaultVersion: string;
+  repos: string[];
+  defaultRepo: string;
+  onChange: (repo: string) => void;
 }) {
-  const [selectedVersion, setSelectedVersion] = React.useState(defaultVersion);
 
   return (
     <SidebarMenu>
@@ -35,7 +36,7 @@ export function RepoDropdown({
             >
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-semibold text-xs">Select Repository</span>
-                <span className="">{selectedVersion}</span>
+                <span className="">{defaultRepo}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -44,13 +45,13 @@ export function RepoDropdown({
             className="w-[--radix-dropdown-menu-trigger-width]"
             align="start"
           >
-            {versions.map((version) => (
+            {repos.map((repo) => (
               <DropdownMenuItem
-                key={version}
-                onSelect={() => setSelectedVersion(version)}
+                key={repo}
+                onSelect={() => onChange(repo)}
               >
-                {version}{" "}
-                {version === selectedVersion && <Check className="ml-auto" />}
+                {repo}
+                {repo === defaultRepo && <Check className="ml-auto" />}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
