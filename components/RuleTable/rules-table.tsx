@@ -57,7 +57,7 @@ export default function RulesList() {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto mt-5">
       <CardHeader>
         <CardTitle>Rules List</CardTitle>
       </CardHeader>
