@@ -5,18 +5,36 @@ import { Trash2, Edit, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import useSWR from "swr";
+import { Skeleton } from "../ui/skeleton";
 
 interface Rule {
   id: string;
   text: string;
 }
 
-export default function RulesList() {
-  const [rules, setRules] = useState<Rule[]>([
-    { id: "1", text: "All team members must attend weekly meetings" },
-    { id: "2", text: "Project updates should be submitted by Friday" },
-    { id: "3", text: "Code reviews are required before merging" },
-  ]);
+type Props = {
+  repoId: string | null;
+};
+
+const fetcher = async <T = unknown,>(
+  ...args: Parameters<typeof fetch>
+): Promise<T> => {
+  const response = await fetch(...args);
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+  return response.json() as Promise<T>;
+};
+
+export default function RulesList(props: Props) {
+  const { repoId } = props;
+  const { data: ruleArray = [], isLoading } = useSWR(
+    `/api/rules?repoId=${repoId}`,
+    fetcher
+  );
+
+  const [rules, setRules] = useState<Rule[]>([]); // todo remove
 
   const [newRule, setNewRule] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -45,7 +63,7 @@ export default function RulesList() {
     if (editText.trim() === "") return;
 
     setRules(
-      rules.map((rule) =>
+      ruleArray?.map((rule) =>
         rule.id === editingId ? { ...rule, text: editText } : rule
       )
     );
@@ -56,6 +74,18 @@ export default function RulesList() {
     setEditingId(null);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center space-x-4 h-full">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-[450px]" />
+          <Skeleton className="h-4 w-[250px]" />
+          <Skeleton className="h-4 w-[450px]" />
+          <Skeleton className="h-4 w-[250px]" />
+        </div>
+      </div>
+    );
+  }
   return (
     <Card className="w-full max-w-2xl mx-auto mt-5">
       <CardHeader>
@@ -78,7 +108,7 @@ export default function RulesList() {
         </div>
 
         <ul className="space-y-2">
-          {rules.map((rule) => (
+          {ruleArray?.map((rule) => (
             <li
               key={rule.id}
               className="flex items-center justify-between p-3 rounded-md bg-muted hover:bg-muted/80 transition-colors"
@@ -121,7 +151,7 @@ export default function RulesList() {
                 </>
               ) : (
                 <>
-                  <span>{rule.text}</span>
+                  <span>{rule.rule}</span>
                   <div className="flex gap-1">
                     <Button
                       variant="ghost"
@@ -148,7 +178,7 @@ export default function RulesList() {
           ))}
         </ul>
 
-        {rules.length === 0 && (
+        {ruleArray?.length === 0 && (
           <div className="text-center py-4 text-muted-foreground">
             No rules added yet. Add your first rule above.
           </div>
