@@ -45,13 +45,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!id) {
+    if (!isDeleted) {
       const valid = await validateCustomRule(rule);
       if (!valid.valid) {
-        return NextResponse.json(
-          { error: valid.reason },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: valid.reason }, { status: 400 });
       }
     }
 
