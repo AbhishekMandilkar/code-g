@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     const rules = await prisma.codeReviewRules.findMany({
       where: {
         repoId: repoId,
+        isDeleted: false,
       },
     });
 
