@@ -9,8 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "../ui/skeleton";
 import { CodeReviewRules } from "@prisma/client";
 import fetcher from "@/lib/fetcher";
-import { toast } from "sonner";
 import axios from "axios";
+import { toast } from "sonner";
+
 interface Rule {
   id: string;
   text?: string; // todo remove this
@@ -24,6 +25,8 @@ type Props = {
 
 export default function RulesList(props: Props) {
   const { repoId, isRepoListLoading } = props;
+  const { mutate } = useSWRConfig();
+
   const { data: ruleArray = [], isLoading } = useSWR<CodeReviewRules[]>(
     `/api/rules?repoId=${repoId}`,
     fetcher
@@ -31,14 +34,40 @@ export default function RulesList(props: Props) {
   const { mutate } = useSWRConfig();
 
   const [isAddLoading, setIsAddLoading] = useState<boolean>(false);
-  const [rules, setRules] = useState<Rule[]>([]); // todo remove
 
   const [newRule, setNewRule] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState<string | undefined>("");
 
-  const deleteRule = (id: string) => {
-    setRules(rules.filter((rule) => rule.id !== id));
+  const deleteRule = async (ruleId: string) => {
+    const currentRule = ruleArray?.find((rule) => rule.id === ruleId);
+    try {
+      console.log("here");
+
+      try {
+        console.log(currentRule?.rule);
+        const resp = await axios({
+          method: "post",
+          url: "/api/rules",
+          data: {
+            id: ruleId.toString(),
+            isDeleted: true,
+            repoId,
+            rule: currentRule?.rule,
+          },
+        });
+        if (resp.status === 200) {
+          toast.success("Rule Deleted Successfully");
+        }
+      } catch (err) {
+        console.log(err);
+        toast.error("Delete Failed");
+      }
+
+      mutate(`/api/rules?repoId=${repoId}`);
+    } catch (error) {
+      console.error("Failed to delete rule", error);
+    }
   };
 
   const addRule = async () => {
@@ -194,15 +223,15 @@ export default function RulesList(props: Props) {
                     <>
                       <span className="text-sm font-mono">{rule.rule}</span>
                       <div className="flex gap-1">
-                        <Button
+                        {/* <Button
                           variant="ghost"
                           size="icon"
                           // onClick={() => startEditing(rule)}
                           className="h-8 w-8 text-muted-foreground hover:text-muted-foreground/90 hover:bg-muted-foreground/10 cursor-pointer"
                           aria-label="Edit rule"
-                        >
-                          {/* TODO <Pencil className="h-4 w-4 text-muted-foreground" /> */}
-                        </Button>
+                        > */}
+                        {/* TODO <Pencil className="h-4 w-4 text-muted-foreground" /> */}
+                        {/* </Button> */}
                         <Button
                           variant="ghost"
                           size="icon"
