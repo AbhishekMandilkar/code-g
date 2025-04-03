@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { Trash2, Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ export default function RulesList(props: Props) {
     `/api/rules?repoId=${repoId}`,
     fetcher
   );
+  const { mutate } = useSWRConfig();
 
   const [isAddLoading, setIsAddLoading] = useState<boolean>(false);
   const [rules, setRules] = useState<Rule[]>([]); // todo remove
@@ -43,6 +44,13 @@ export default function RulesList(props: Props) {
   const addRule = async () => {
     if (newRule.trim() === "") {
       toast.error("Please add the appropriate rule");
+      setNewRule("");
+      return;
+    }
+
+    const isRulePresent = ruleArray?.some(({ rule }) => rule === newRule);
+    if (isRulePresent) {
+      toast.error("This rule already exists");
       return;
     }
 
@@ -54,6 +62,7 @@ export default function RulesList(props: Props) {
         data: { repoId, rule: newRule },
       });
       if (resp.status === 200) {
+        mutate(`/api/rules?repoId=${repoId}`);
         setIsAddLoading(false);
         toast.success("Rule added successfully");
       }
