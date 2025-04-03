@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
-import {usePathname} from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export function NavMain({
   items,
@@ -19,6 +19,7 @@ export function NavMain({
     title: string;
     url: string;
     icon?: Icon;
+    isActive: true;
   }[];
 }) {
   const pathname = usePathname();
@@ -30,17 +31,17 @@ export function NavMain({
         </SidebarMenu>
         <SidebarMenu>
           {items.map((item) => (
-            <Link
-              className="w-full"
-              href={item.url}
-              key={item.title}
-            >
+            <Link className="w-full" href={item.url} key={item.title}>
               <SidebarMenuItem key={item.title} className="cursor-pointer">
-                <SidebarMenuButton tooltip={item.title} isActive={pathname === item.url} className="cursor-pointer">
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  isActive={pathname === item.url}
+                  className="cursor-pointer"
+                >
                   {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+                  <span>{item.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </Link>
           ))}
         </SidebarMenu>

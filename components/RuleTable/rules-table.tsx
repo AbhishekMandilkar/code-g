@@ -11,11 +11,13 @@ import { CodeReviewRules } from "@prisma/client";
 
 interface Rule {
   id: string;
-  text: string;
+  text?: string; // todo remove this
+  rule?: string;
 }
 
 type Props = {
   repoId: string | null;
+  isRepoListLoading?: boolean;
 };
 
 const fetcher = async <T = unknown,>(
@@ -29,7 +31,7 @@ const fetcher = async <T = unknown,>(
 };
 
 export default function RulesList(props: Props) {
-  const { repoId } = props;
+  const { repoId, isRepoListLoading } = props;
   const { data: ruleArray = [], isLoading } = useSWR<CodeReviewRules[]>(
     `/api/rules?repoId=${repoId}`,
     fetcher
@@ -39,7 +41,7 @@ export default function RulesList(props: Props) {
 
   const [newRule, setNewRule] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editText, setEditText] = useState("");
+  const [editText, setEditText] = useState<string | undefined>("");
 
   const deleteRule = (id: string) => {
     setRules(rules.filter((rule) => rule.id !== id));
@@ -111,7 +113,7 @@ export default function RulesList(props: Props) {
       </CardHeader>
       <CardContent className="">
         {(() => {
-          if (isLoading) {
+          if (isLoading || isRepoListLoading) {
             return loaderView();
           }
 
@@ -177,7 +179,7 @@ export default function RulesList(props: Props) {
                           className="h-8 w-8 text-muted-foreground hover:text-muted-foreground/90 hover:bg-muted-foreground/10 cursor-pointer"
                           aria-label="Edit rule"
                         >
-                          <Pencil className="h-4 w-4 text-muted-foreground" />
+                         {/* TODO <Pencil className="h-4 w-4 text-muted-foreground" /> */}
                         </Button>
                         <Button
                           variant="ghost"
