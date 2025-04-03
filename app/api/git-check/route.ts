@@ -1,23 +1,25 @@
 // app/api/github-review/route.js
 
-import { NextResponse } from 'next/server';
-import axios from 'axios';
-import {Octokit} from '@octokit/rest';
-import {prisma} from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import axios from "axios";
+import { Octokit } from "@octokit/rest";
+import { prisma } from "@/lib/prisma";
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
-
 export async function POST(req: Request) {
   try {
-    const event = req.headers.get('x-github-event');
+    const event = req.headers.get("x-github-event");
     const body = await req.json();
-    const payload = typeof body?.payload === 'string' ? JSON.parse(body?.payload) : (body?.payload || body);
+    const payload =
+      typeof body?.payload === "string"
+        ? JSON.parse(body?.payload)
+        : body?.payload || body;
     if (
       event !== "pull_request" ||
       !["opened", "reopened", "synchronize"].includes(payload?.action)
     ) {
-      return NextResponse.json({ message: 'Event ignored' }, { status: 200 });
+      return NextResponse.json({ message: "Event ignored" }, { status: 200 });
     }
 
     const { pull_request, repository } = payload;
@@ -47,12 +49,11 @@ export async function POST(req: Request) {
       headers: {
         Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
         Accept: "application/vnd.github.v3.diff",
-        'X-GitHub-Api-Version': '2022-11-28',
+        "X-GitHub-Api-Version": "2022-11-28",
       },
     };
 
     const diffResponse = await axios.request(config);
-    
 
     const diffContent = diffResponse.data;
 
@@ -62,8 +63,9 @@ export async function POST(req: Request) {
       },
     });
 
-    const rulesString = rules.map((rule) => `Id: ${rule.id} Rule: ${rule.rule}`).join('\n');
-
+    const rulesString = rules
+      .map((rule) => `Id: ${rule.id} Rule: ${rule.rule}`)
+      .join("\n");
 
     // Step 3: Get AI-generated inline comments
     const aiResponse = await axios.post(
@@ -73,20 +75,31 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "system",
-            content: `Provide concise inline code review comments using following rules:
-              ${
-                rulesString
-                  ? rulesString
-                  : "Pls do review the using best practices according to the language and framework used in the code"
-              }
-              in JSON format: [{"file": "path/to/file","line": lineNumber,"comment": "Your comment", "ruleId": "ruleId which was used to generate the comment"}] 
-              Notes -
-              1. PLS DONOT RETURN ANYTHING ELSE AND DONOT FORMAT IN MARKDOWN OR ANY OTHER FORMAT JUST PLAIN JSON STRING 
-              2. ALWAYS FOLLOW THE RULES STRICTLY
-              3. Use only double quotes for strings in JSON
-              4. Pls add the comment on the next line of the line number you find the issue
-              5. IMPORTANT: All property names in JSON must be in double quotes
-              `,
+            content: `
+              You are a code review assistant. Review the provided code and return concise inline comments strictly following the specified rules:
+            ${
+              rulesString
+                ? rulesString
+                : "Review according to best practices based on the programming language and framework used."
+            }
+            Your output must be a plain JSON string with the following format:
+              [
+                {
+                  "file": "path/to/file",
+                  "line": lineNumber,
+                  "comment": "Your comment",
+                  "ruleId": "ruleId used to generate the comment"
+                }
+              ]
+
+              Guidelines:
+              1. DO NOT return anything other than the plain JSON string. No markdown, no explanation, no preamble or postscript.
+              2. All strings and property names MUST use double quotes.
+              3. Insert comments on the line immediately following the line with the issue.
+              4. Always use the provided rules strictly. If no rules are given, default to established best practices for the language and framework.
+              5. Ensure every comment is clear, actionable, and relevant to the identified issue.
+
+              IMPORTANT: Follow the JSON format exactly—no deviations.`,
           },
           { role: "user", content: `Review diff:\n\n${diffContent}` },
         ],
@@ -94,7 +107,9 @@ export async function POST(req: Request) {
       { headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` } }
     );
 
-    const reviewComments = JSON.parse(aiResponse.data.choices[0].message.content);
+    const reviewComments = JSON.parse(
+      aiResponse.data.choices[0].message.content
+    );
 
     // Step 4: Post inline comments on GitHub PR
     for (const comment of reviewComments) {
@@ -109,21 +124,29 @@ export async function POST(req: Request) {
       });
     }
     addCommentToDB(String(prNumber), reviewComments, String(repoId));
-    return NextResponse.json({ message: 'Review completed successfully' }, { status: 200 });
+    return NextResponse.json(
+      { message: "Review completed successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
-
-const addCommentToDB = async (prId: string, comments: {
-  comment: string;
-  ruleId: string;
-  file: string;
-  line: number;
-}[], repoId: string) => {
-
+const addCommentToDB = async (
+  prId: string,
+  comments: {
+    comment: string;
+    ruleId: string;
+    file: string;
+    line: number;
+  }[],
+  repoId: string
+) => {
   try {
     await prisma.codeReviewPRs.create({
       data: {
@@ -140,7 +163,7 @@ const addCommentToDB = async (prId: string, comments: {
       })),
     });
   } catch (error) {
-    console.error('Database error:', error);
+    console.error("Database error:", error);
     throw error;
   }
-}
+};
