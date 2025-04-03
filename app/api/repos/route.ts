@@ -17,16 +17,20 @@ export async function GET(request: Request) {
     auth: process.env.GITHUB_TOKEN,
   });
 
-  const repos = await octokit.request("GET /users/{username}/repos", {
-    username,
-    per_page: 100,
-  });
 
+  const orgRepos = await octokit.request('GET /orgs/DeepIntent/repos', {
+    org: 'DeepIntent',
+    headers: {
+      'X-GitHub-Api-Version': '2022-11-28'
+    }
+  })
   return NextResponse.json(
-    repos.data?.map((repo) => ({
-      name: repo.name,
-      url: repo.html_url,
-      id: repo.id,
-    }))
+    [...orgRepos.data]
+      .filter((repo) => repo.private)
+      .map((repo) => ({
+        name: repo.name,
+        url: repo.html_url,
+        id: repo.id,
+      }))
   );
 }
