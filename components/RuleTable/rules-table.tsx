@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, Check, X, Pencil } from "lucide-react";
+import useSWR from "swr";
+import { Trash2, Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import useSWR from "swr";
 import { Skeleton } from "../ui/skeleton";
 import { CodeReviewRules } from "@prisma/client";
-
+import fetcher from "@/lib/fetcher";
+import { toast } from "sonner";
+import axios from "axios";
 interface Rule {
   id: string;
   text?: string; // todo remove this
@@ -20,16 +22,6 @@ type Props = {
   isRepoListLoading?: boolean;
 };
 
-const fetcher = async <T = unknown,>(
-  ...args: Parameters<typeof fetch>
-): Promise<T> => {
-  const response = await fetch(...args);
-  if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
-  }
-  return response.json() as Promise<T>;
-};
-
 export default function RulesList(props: Props) {
   const { repoId, isRepoListLoading } = props;
   const { data: ruleArray = [], isLoading } = useSWR<CodeReviewRules[]>(
@@ -37,6 +29,7 @@ export default function RulesList(props: Props) {
     fetcher
   );
 
+  const [isAddLoading, setIsAddLoading] = useState<boolean>(false);
   const [rules, setRules] = useState<Rule[]>([]); // todo remove
 
   const [newRule, setNewRule] = useState("");
@@ -47,13 +40,31 @@ export default function RulesList(props: Props) {
     setRules(rules.filter((rule) => rule.id !== id));
   };
 
-  const addRule = () => {
-    if (newRule.trim() === "") return;
+  const addRule = async () => {
+    if (newRule.trim() === "") {
+      toast.error("Please add the appropriate rule");
+      return;
+    }
 
-    const newId = (
-      Math.max(0, ...rules.map((r) => Number.parseInt(r.id))) + 1
-    ).toString();
-    setRules([...rules, { id: newId, text: newRule }]);
+    setIsAddLoading(true);
+    try {
+      const resp = await axios({
+        method: "post",
+        url: "/api/rules",
+        data: { repoId, rule: newRule },
+      });
+      if (resp.status === 200) {
+        setIsAddLoading(false);
+        toast.success("Rule added successfully");
+      }
+    } catch (err) {
+      setIsAddLoading(false);
+      // @ts-expect-error - todo
+      const errorMessage = err?.response?.data?.error;
+      if (errorMessage) {
+        toast.error(errorMessage);
+      }
+    }
     setNewRule("");
   };
 
@@ -108,7 +119,9 @@ export default function RulesList(props: Props) {
             }}
             className="flex-1"
           />
-          <Button onClick={addRule}>Add Rule</Button>
+          <Button onClick={addRule}>
+            {isAddLoading ? <Loader2 className="animate-spin" /> : "Add Rule"}
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="">
@@ -179,7 +192,7 @@ export default function RulesList(props: Props) {
                           className="h-8 w-8 text-muted-foreground hover:text-muted-foreground/90 hover:bg-muted-foreground/10 cursor-pointer"
                           aria-label="Edit rule"
                         >
-                         {/* TODO <Pencil className="h-4 w-4 text-muted-foreground" /> */}
+                          {/* TODO <Pencil className="h-4 w-4 text-muted-foreground" /> */}
                         </Button>
                         <Button
                           variant="ghost"
