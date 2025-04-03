@@ -31,7 +31,6 @@ export default function RulesList(props: Props) {
     `/api/rules?repoId=${repoId}`,
     fetcher
   );
-  const { mutate } = useSWRConfig();
 
   const [isAddLoading, setIsAddLoading] = useState<boolean>(false);
 
