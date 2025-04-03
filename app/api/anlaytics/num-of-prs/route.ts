@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import dayjs from "dayjs";
 
 export async function GET(request: NextRequest) {
     try {
@@ -17,35 +18,45 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "Repo ID is required" }, { status: 400 });
         }
 
+        // Get current date information using dayjs
+        const now = dayjs();
+        
+        // Calculate current month date range
+        const currentMonthStart = now.startOf('month').toDate();
+        const currentMonthEnd = now.endOf('month').toDate();
+        
+        // Calculate previous month date range
+        const previousMonth = now.subtract(1, 'month');
+        const previousMonthStart = previousMonth.startOf('month').toDate();
+        const previousMonthEnd = previousMonth.endOf('month').toDate();
 
-        const currentMonth = new Date().getMonth();
-        const previousMonth = new Date(new Date().setMonth(currentMonth - 1)).getMonth();
-
-        const currentMonthPRs = await prisma.codeReviewComments.count({
+        const currentMonthPRs = await prisma.codeReviewPRs.findMany({
             where: {
                 repoId: repoId,
                 createdAt: {
-                    gte: new Date(new Date().getFullYear(), currentMonth, 1),
-                    lt: new Date(new Date().getFullYear(), currentMonth + 1, 1),
+                    gte: currentMonthStart,
+                    lte: currentMonthEnd,
                 },
             },
         });
+        const currentMonthPRCount = currentMonthPRs.length;
 
-        const previousMonthPRs = await prisma.codeReviewComments.count({
+        const previousMonthPRs = await prisma.codeReviewPRs.findMany({
             where: {
                 repoId: repoId,
                 createdAt: {
-                    gte: new Date(new Date().getFullYear(), previousMonth, 1),
-                    lt: new Date(new Date().getFullYear(), previousMonth + 1, 1),
+                    gte: previousMonthStart,
+                    lte: previousMonthEnd,
                 },
             },
         });
+        const previousMonthPRCount = previousMonthPRs.length;
 
-        const percentageDiff = previousMonthPRs ? ((currentMonthPRs - previousMonthPRs) / previousMonthPRs) * 100 : 0;
+        const percentageDiff = previousMonthPRCount ? ((currentMonthPRCount - previousMonthPRCount) / previousMonthPRCount) * 100 : 0;
 
         return NextResponse.json({
             repoId,
-            prCount: currentMonthPRs,
+            prCount: currentMonthPRCount,
             percentageDiff,
         }, { status: 200 });
     } catch (error) {

@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import dayjs from "dayjs";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,27 +21,37 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const currentMonth = new Date().getMonth();
-    const previousMonth = new Date(
-      new Date().setMonth(currentMonth - 1)
-    ).getMonth();
+    // Get current date information using dayjs
+    const now = dayjs();
+    
+    // Calculate current month date range
+    const currentMonthStart = now.startOf('month').toDate();
+    const currentMonthEnd = now.endOf('month').toDate();
+    
+    // Calculate previous month date range
+    const previousMonth = now.subtract(1, 'month');
+    const previousMonthStart = previousMonth.startOf('month').toDate();
+    const previousMonthEnd = previousMonth.endOf('month').toDate();
 
-    const currentMonthComments = await prisma.codeReviewComments.count({
-      where: {
-        repoId: repoId,
-        createdAt: {
-          gte: new Date(new Date().getFullYear(), currentMonth, 1),
-          lt: new Date(new Date().getFullYear(), currentMonth + 1, 1),
-        },
+    const currentMonthWhere = {
+      repoId: repoId,
+      createdAt: {
+        gte: currentMonthStart,
+        lte: currentMonthEnd,
       },
+    };
+  
+    
+    const currentMonthComments = await prisma.codeReviewComments.count({
+      where: currentMonthWhere,
     });
 
     const previousMonthComments = await prisma.codeReviewComments.count({
       where: {
         repoId: repoId,
         createdAt: {
-          gte: new Date(new Date().getFullYear(), previousMonth, 1),
-          lt: new Date(new Date().getFullYear(), previousMonth + 1, 1),
+          gte: previousMonthStart,
+          lte: previousMonthEnd,
         },
       },
     });

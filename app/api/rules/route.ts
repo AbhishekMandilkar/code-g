@@ -1,17 +1,16 @@
-import {validateCustomRule} from '@/lib/openai';
-import {prisma} from '@/lib/prisma';
-import { NextResponse } from 'next/server';
-
+import { validateCustomRule } from "@/lib/openai";
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 // GET /api/rules?repoId=xxx
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const repoId = searchParams.get('repoId');
+    const repoId = searchParams.get("repoId");
 
     if (!repoId) {
       return NextResponse.json(
-        { error: 'Repository ID is required' },
+        { error: "Repository ID is required" },
         { status: 400 }
       );
     }
@@ -24,9 +23,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(rules);
   } catch (error) {
-    console.error('Error fetching rules:', error);
+    console.error("Error fetching rules:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch rules' },
+      { error: "Failed to fetch rules" },
       { status: 500 }
     );
   }
@@ -40,7 +39,7 @@ export async function POST(request: Request) {
 
     if (!rule || !repoId) {
       return NextResponse.json(
-        { error: 'Rule and repository ID are required' },
+        { error: "Rule and repository ID are required" },
         { status: 400 }
       );
     }
@@ -51,28 +50,33 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: valid.reason }, { status: 400 });
       }
     }
+    let result;
+    if (id) {
+      result = await prisma.codeReviewRules.update({
+        where: {
+          id: id,
+        },
+        data: {
+          rule: rule,
+          updatedAt: new Date(),
+          isDeleted: isDeleted,
+        },
+      });
+    } else {
+      result = await prisma.codeReviewRules.create({
+        data: {
+          rule: rule,
+          repoId: String(repoId),
+          isDeleted: false,
+        },
+      });
+    }
 
-    const upsertedRule = await prisma.codeReviewRules.upsert({
-      where: {
-        id: id,
-      },
-      update: {
-        rule: rule,
-        updatedAt: new Date(),
-        isDeleted: isDeleted,
-      },
-      create: {
-        rule,
-        repoId,
-        isDeleted: false,
-      },
-    });
-
-    return NextResponse.json(upsertedRule, { status: 200 });
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    console.error('Error upserting rule:', error);
+    console.error("Error upserting rule:", error);
     return NextResponse.json(
-      { error: 'Failed to upsert rule' },
+      { error: "Failed to upsert rule" },
       { status: 500 }
     );
   }

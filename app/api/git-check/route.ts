@@ -125,6 +125,12 @@ const addCommentToDB = async (prId: string, comments: {
 }[], repoId: string) => {
 
   try {
+    await prisma.codeReviewPRs.create({
+      data: {
+        pullRequestId: prId,
+        repoId: repoId,
+      },
+    });
     await prisma.codeReviewComments.createMany({
       data: comments.map((comment) => ({
         pullRequestId: prId,
