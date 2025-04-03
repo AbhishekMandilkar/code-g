@@ -1,3 +1,4 @@
+import {validateCustomRule} from '@/lib/openai';
 import {prisma} from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
@@ -42,6 +43,16 @@ export async function POST(request: Request) {
         { error: 'Rule and repository ID are required' },
         { status: 400 }
       );
+    }
+
+    if (!id) {
+      const valid = await validateCustomRule(rule);
+      if (!valid.valid) {
+        return NextResponse.json(
+          { error: valid.reason },
+          { status: 400 }
+        );
+      }
     }
 
     const upsertedRule = await prisma.codeReviewRules.upsert({
