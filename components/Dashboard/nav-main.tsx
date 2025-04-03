@@ -19,7 +19,6 @@ export function NavMain({
     title: string;
     url: string;
     icon?: Icon;
-    isActive: true;
   }[];
 }) {
   const pathname = usePathname();

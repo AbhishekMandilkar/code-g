@@ -7,6 +7,8 @@ import { RepoDropdown } from "@/components/Dashboard/repo-dropdown";
 import { SiteHeader } from "@/components/Dashboard/site-header";
 import { RepoProvider } from "@/components/Provider/RepoProvider";
 import { Toaster } from "sonner";
+import {ThemeProvider} from "@/components/Provider/ThemeProvider";
+import {ThemeToggle} from "@/components/ThemeToggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,10 +31,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <ThemeProvider  attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange>
         <RepoProvider>
           <SidebarProvider
             style={
@@ -45,13 +51,14 @@ export default function RootLayout({
             <AppSidebar variant="inset" />
             <SidebarInset>
               <div className="flex flex-1 flex-col overflow-y-auto">
-                <SiteHeader leftView={<RepoDropdown />} />
+                <SiteHeader leftView={<RepoDropdown />} rightView={<ThemeToggle />} />
                 {children}
               </div>
             </SidebarInset>
           </SidebarProvider>
         </RepoProvider>
         <Toaster position="top-center" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

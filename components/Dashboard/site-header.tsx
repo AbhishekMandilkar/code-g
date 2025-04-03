@@ -17,6 +17,7 @@ export function SiteHeader(props:{
           className="mx-2 data-[orientation=vertical]:h-4"
         />
         {props.leftView}
+        <div className="flex-1" />
         {props.rightView}
       </div>
     </header>

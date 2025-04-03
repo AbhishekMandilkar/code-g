@@ -105,7 +105,7 @@ export default function RulesList(props: Props) {
 
   return (
     <Card className="w-full max-w-2xl mx-auto mt-5 min-h-2/3">
-      <CardHeader className="sticky top-0 bg-background pb-2 gap-4">
+      <CardHeader className="sticky top-0 pb-2 gap-4">
         <CardTitle className="text-lg font-bold">Rules List</CardTitle>
         <div className="flex gap-2 ">
           <Input
